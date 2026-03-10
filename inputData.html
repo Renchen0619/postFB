@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>小說後台匯入系統</title>
+	<style>
+		body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+		.admin-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+		h2 { color: #1877f2; text-align: center; margin-bottom: 20px; }
+		.form-group { margin-bottom: 15px; }
+		label { display: block; font-weight: bold; margin-bottom: 5px; color: #444; }
+		input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+		textarea { height: 120px; resize: vertical; }
+		button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+		button:hover { background: #166fe5; }
+		button:disabled { background: #ccc; cursor: not-allowed; }
+		#status { margin-top: 15px; text-align: center; font-weight: bold; }
+		.success { color: #28a745; }
+		.error { color: #dc3545; }
+	</style>
+</head>
+<body>
+
+<div class="admin-card">
+	<h2>📝 匯入新章節</h2>
+	
+	<div class="form-group">
+		<label>發佈日期 (yyyy/mm/dd HH:MM:SS)</label>
+		<input type="text" id="postDate" placeholder="例如: 2026/03/10 23:15:00">
+	</div>
+
+	<div class="form-group">
+		<label>章節標題</label>
+		<input type="text" id="postTitle" placeholder="輸入小說標題">
+	</div>
+
+	<div class="form-group">
+		<label>內文內容</label>
+		<textarea id="postContent" placeholder="在此貼上小說內容..."></textarea>
+	</div>
+
+	<div class="form-group">
+		<label>圖片路徑 (GitHub 路徑)</label>
+		<input type="text" id="postPic" placeholder="例如: pic/20260310_001.jpg">
+	</div>
+
+	<button id="submitBtn" onclick="sendToSheet()">🚀 送出至 Google 試算表</button>
+	<div id="status"></div>
+</div>
+
+<script>
+	// 1. 自動填入當前時間當作預設值
+	window.onload = () => {
+		const now = new Date();
+		const dateStr = now.getFullYear() + '/' + 
+						String(now.getMonth() + 1).padStart(2, '0') + '/' + 
+						String(now.getDate()).padStart(2, '0') + ' ' + 
+						String(now.getHours()).padStart(2, '0') + ':' + 
+						String(now.getMinutes()).padStart(2, '0') + ':' + 
+						String(now.getSeconds()).padStart(2, '0');
+		document.getElementById('postDate').value = dateStr;
+	};
+
+	// 2. 傳送資料到 GAS 的函式
+	async function sendToSheet() {
+		const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3Z2tiYkxXZmIwaFZpTDZiREVuemhUb0xNM1pzUldZTHZtcWdpaGhxYUk0MVhoM0trcGRCQkZOdW81RllsYUloVFI5QS9leGVj";
+		const scriptUrl = atob(secret);
+		const status = document.getElementById('status');
+		
+		const payload = {
+			date: document.getElementById('postDate').value,
+			title: document.getElementById('postTitle').value,
+			content: document.getElementById('postContent').value,
+			pic: document.getElementById('postPic').value
+		};
+
+		const btn = document.getElementById('submitBtn');
+		btn.disabled = true;
+
+		try {
+			// 使用更保險的傳送方式
+			const response = await fetch(scriptUrl, {
+				method: "POST",
+				mode: "no-cors", // 關鍵：不要求回傳結果，直接硬塞過去
+				headers: {
+					"Content-Type": "text/plain;charset=utf-8"
+				},
+				body: JSON.stringify(payload)
+			});
+
+			// 註：在 no-cors 模式下，response.ok 會是 false，且拿不到回傳字串
+			// 但只要資料有進試算表，就代表成功了！
+			alert("指令已送出！請檢查試算表是否有新資料。");
+			status.innerText = "✅ 匯入成功！請檢查試算表。";
+			status.className = "success";
+			
+			document.getElementById('postTitle').value = "";
+			document.getElementById('postContent').value = "";
+		} catch (error) {
+			console.error("錯誤:", error);
+			alert("連線發生問題，請查看 Console。");
+		} finally {
+			btn.disabled = false;
+		}
+	}
+</script>
+
+</body>
+</html>
