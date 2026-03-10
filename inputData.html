@@ -2,106 +2,102 @@
 <html lang="zh-TW">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>小說後台匯入系統</title>
+	<title>小說庫後台 - 權限驗證</title>
 	<style>
-		body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-		.admin-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-		h2 { color: #1877f2; text-align: center; margin-bottom: 20px; }
-		.form-group { margin-bottom: 15px; }
-		label { display: block; font-weight: bold; margin-bottom: 5px; color: #444; }
-		input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-		textarea { height: 120px; resize: vertical; }
-		button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-		button:hover { background: #166fe5; }
-		button:disabled { background: #ccc; cursor: not-allowed; }
+		body { font-family: sans-serif; background: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
+		.admin-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+		.field { margin-bottom: 15px; }
+		label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+		input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+		/* 強調 Token 輸入框 */
+		#token { border: 2px solid #1877f2; background: #e7f3ff; }
+		button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+		button:hover { background: #145dbf; }
 		#status { margin-top: 15px; text-align: center; font-weight: bold; }
-		.success { color: #28a745; }
-		.error { color: #dc3545; }
 	</style>
 </head>
 <body>
 
 <div class="admin-card">
-	<h2>📝 匯入新章節</h2>
+	<h2>🔑 內容匯入管理</h2>
 	
-	<div class="form-group">
-		<label>發佈日期 (yyyy/mm/dd HH:MM:SS)</label>
-		<input type="text" id="postDate" placeholder="例如: 2026/03/10 23:15:00">
+	<div class="field">
+		<label>請輸入存取 Token (密鑰)</label>
+		<input type="password" id="token" placeholder="請輸入密碼">
 	</div>
 
-	<div class="form-group">
-		<label>章節標題</label>
-		<input type="text" id="postTitle" placeholder="輸入小說標題">
+	<hr>
+
+	<div class="field">
+		<label>發佈日期</label>
+		<input type="text" id="date">
 	</div>
 
-	<div class="form-group">
-		<label>內文內容</label>
-		<textarea id="postContent" placeholder="在此貼上小說內容..."></textarea>
+	<div class="field">
+		<label>標題</label>
+		<input type="text" id="title">
 	</div>
 
-	<div class="form-group">
-		<label>圖片路徑 (GitHub 路徑)</label>
-		<input type="text" id="postPic" placeholder="例如: pic/20260310_001.jpg">
+	<div class="field">
+		<label>內容</label>
+		<textarea id="content" rows="6"></textarea>
 	</div>
 
-	<button id="submitBtn" onclick="sendToSheet()">🚀 送出至 Google 試算表</button>
+	<div class="field">
+		<label>圖片路徑</label>
+		<input type="text" id="pic" placeholder="pic/example.jpg">
+	</div>
+
+	<button onclick="sendData()">確認匯入資料庫</button>
 	<div id="status"></div>
 </div>
 
 <script>
-	// 1. 自動填入當前時間當作預設值
-	window.onload = () => {
+	// 自動生成時間
+	function updateTime() {
 		const now = new Date();
-		const dateStr = now.getFullYear() + '/' + 
-						String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-						String(now.getDate()).padStart(2, '0') + ' ' + 
-						String(now.getHours()).padStart(2, '0') + ':' + 
-						String(now.getMinutes()).padStart(2, '0') + ':' + 
-						String(now.getSeconds()).padStart(2, '0');
-		document.getElementById('postDate').value = dateStr;
-	};
+		const fmt = (n) => n.toString().padStart(2, '0');
+		document.getElementById('date').value = `${now.getFullYear()}/${fmt(now.getMonth()+1)}/${fmt(now.getDate())} ${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
+	}
+	updateTime();
 
-	// 2. 傳送資料到 GAS 的函式
-	async function sendToSheet() {
+	async function sendData() {
 		const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3Z2tiYkxXZmIwaFZpTDZiREVuemhUb0xNM1pzUldZTHZtcWdpaGhxYUk0MVhoM0trcGRCQkZOdW81RllsYUloVFI5QS9leGVj";
 		const scriptUrl = atob(secret);
 		const status = document.getElementById('status');
 		
 		const payload = {
-			date: document.getElementById('postDate').value,
-			title: document.getElementById('postTitle').value,
-			content: document.getElementById('postContent').value,
-			pic: document.getElementById('postPic').value
+			token: document.getElementById('token').value, // 抓取輸入的密碼
+			date: document.getElementById('date').value,
+			title: document.getElementById('title').value,
+			content: document.getElementById('content').value,
+			pic: document.getElementById('pic').value
 		};
 
-		const btn = document.getElementById('submitBtn');
-		btn.disabled = true;
+		if (!payload.token) { alert("請輸入 Token 才能送出！"); return; }
+
+		status.innerText = "傳送中...";
+		status.style.color = "blue";
 
 		try {
-			// 使用更保險的傳送方式
-			const response = await fetch(scriptUrl, {
+			await fetch(scriptUrl, {
 				method: "POST",
-				mode: "no-cors", // 關鍵：不要求回傳結果，直接硬塞過去
-				headers: {
-					"Content-Type": "text/plain;charset=utf-8"
-				},
+				mode: "no-cors",
+				headers: { "Content-Type": "text/plain" },
 				body: JSON.stringify(payload)
 			});
 
-			// 註：在 no-cors 模式下，response.ok 會是 false，且拿不到回傳字串
-			// 但只要資料有進試算表，就代表成功了！
-			alert("指令已送出！請檢查試算表是否有新資料。");
-			status.innerText = "✅ 匯入成功！請檢查試算表。";
-			status.className = "success";
+			// 因為 no-cors 無法抓回傳值，我們顯示提示
+			status.innerText = "🚀 指令已發出！\n若 Token 正確，資料將會出現在試算表。";
+			status.style.color = "green";
 			
-			document.getElementById('postTitle').value = "";
-			document.getElementById('postContent').value = "";
-		} catch (error) {
-			console.error("錯誤:", error);
-			alert("連線發生問題，請查看 Console。");
-		} finally {
-			btn.disabled = false;
+			// 清空內容
+			document.getElementById('title').value = "";
+			document.getElementById('content').value = "";
+			updateTime();
+		} catch (e) {
+			status.innerText = "❌ 傳送發生錯誤";
+			status.style.color = "red";
 		}
 	}
 </script>
