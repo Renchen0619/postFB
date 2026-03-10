@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>鬼磕頭小說</title>
+	<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+	<style>
+		/* 基礎設定 */
+		body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 10px 10px 140px 10px; } 
+		.container { width: 100%; max-width: 600px; margin: 0 auto; }
+		h1 { font-size: 1.2rem; margin: 10px 0; color: #1c1e21; text-align: center; }
+		
+		/* 搜尋框 */
+		.search-bar { width: 100%; padding: 12px 15px; font-size: 16px; border-radius: 20px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 15px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+		/* 固定底欄 */
+		.bottom-dock { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #ddd; padding: 12px 0; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+		.dock-container { max-width: 600px; margin: 0 auto; padding: 0 15px; }
+		.control-row { display: flex; gap: 8px; margin-bottom: 8px; }
+		.control-select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9; font-size: 13px; cursor: pointer; }
+		
+		.pagination { display: flex; justify-content: space-between; align-items: center; }
+		.page-btn { background: #1877f2; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; flex: 1; }
+		.page-btn:disabled { background: #e4e6eb; color: #bcc0c4; cursor: not-allowed; }
+		.page-num-display { flex: 1.5; text-align: center; font-weight: bold; color: #4b4f56; font-size: 13px; white-space: pre-line; line-height: 1.3; }
+
+		/* 卡片樣式 */
+		.post-card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; }
+		.post-date { color: #65676b; font-size: 0.8em; }
+		.post-title { font-weight: bold; font-size: 1.1em; margin: 5px 0; color: #1c1e21; }
+		.post-content { color: #444; font-size: 16px; line-height: 1.8; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+		.thumb-img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin: 10px 5px 0 0; border: 1px solid #eee; }
+
+		/* --- 彈窗優化：標題固定 --- */
+		.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
+		.modal-content { 
+			background: #fdfaf2; color: #2d2d2d; margin: 0 auto; width: 100%; max-width: 600px; height: 100%; 
+			display: flex; flex-direction: column; overflow: hidden; position: relative; 
+		}
+		.modal-header { 
+			padding: 15px 20px; background: #fdfaf2; border-bottom: 1px solid #e5e5e5; 
+			display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+		}
+		.modal-header-title { font-weight: bold; font-size: 1.1rem; color: #1c1e21; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; padding-right: 10px; }
+		.close-btn { font-size: 30px; cursor: pointer; color: #888; line-height: 1; }
+		
+		/* 彈窗內容區可捲動 */
+		.modal-body-scroll { flex: 1; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+		.modal-img { width: 100%; border-radius: 10px; margin-top: 15px; }
+	</style>
+</head>
+<body>
+
+<div class="container">
+	<h1>📖 鬼磕頭小說庫</h1>
+	<input type="text" id="search" class="search-bar" placeholder="🔍 搜尋內容..." oninput="currentPage=1; updateDisplay()">
+	<div id="post-list"></div>
+</div>
+
+<div class="bottom-dock">
+	<div class="dock-container">
+		<div class="control-row">
+			<select id="sortOrder" class="control-select" onchange="updateDisplay()">
+				<option value="desc">最新更新 (倒序)</option>
+				<option value="asc">從頭開始 (順序)</option>
+			</select>
+			<select id="pageSize" class="control-select" onchange="currentPage=1; updateDisplay()">
+				<option value="5"          >每頁  5 筆</option>
+				<option value="10"         >每頁 10 筆</option>
+				<option value="20" selected>每頁 20 筆</option>
+				<option value="50"         >每頁 50 筆</option>
+				<option value="100"        >每頁 100 筆</option>
+				<option value="all"        >顯示全部</option>
+			</select>
+		</div>
+		<div class="pagination">
+			<button onclick="changePage(-1)" id="prevBtn" class="page-btn">上一頁</button>
+			<span id="pageNum" class="page-num-display">1 / 1</span>
+			<button onclick="changePage(1)" id="nextBtn" class="page-btn">下一頁</button>
+		</div>
+	</div>
+</div>
+
+<div id="postModal" class="modal" onclick="closeModal()">
+	<div class="modal-content" onclick="event.stopPropagation()">
+		<div class="modal-header">
+			<div id="modal-header-title" class="modal-header-title"></div>
+			<span class="close-btn" onclick="closeModal()">&times;</span>
+		</div>
+		<div class="modal-body-scroll">
+			<div id="modal-date" class="post-date"></div>
+			<div id="modal-body" class="post-content" style="display:block; padding-top: 10px; font-size:1.15em; -webkit-line-clamp: unset;"></div>
+			<div id="modal-images"></div>
+		</div>
+	</div>
+</div>
+
+<script>
+	let allPosts = [];
+	let filteredPosts = [];
+	let currentPage = 1;
+	
+	const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3ajJxYzBMaGpjUU91UWIxdWxQRjhabjFEVkRWYVp6U2ZSeDQ2V28yNHpFVXJVaVpuU1dxV25YZVpGMTRpWFRRcFgvZXhlYw==";
+	const API_URL = atob(secret);
+
+	async function loadData() {
+		const list = document.getElementById('post-list');
+		list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">正在載入小說資料...</div>';
+		try {
+			const res = await fetch(API_URL);
+			allPosts = await res.json();
+			updateDisplay();
+		} catch (e) {
+			list.innerHTML = '<div style="color:red; text-align:center;">連線失敗。</div>';
+		}
+	}
+
+	function updateDisplay() {
+		const term = document.getElementById('search').value.toLowerCase();
+		const order = document.getElementById('sortOrder').value;
+		const sizeValue = document.getElementById('pageSize').value;
+
+		filteredPosts = allPosts.filter(p => 
+			(p["貼文內容"] || "").toLowerCase().includes(term) || 
+			(p["標題"] || "").toLowerCase().includes(term)
+		);
+
+		filteredPosts.sort((a, b) => {
+			const dA = new Date(a["發佈日期"] || 0);
+			const dB = new Date(b["發佈日期"] || 0);
+			return order === 'asc' ? dA - dB : dB - dA;
+		});
+
+		const pageSize = sizeValue === 'all' ? filteredPosts.length : parseInt(sizeValue);
+		const maxPage = Math.ceil(filteredPosts.length / pageSize) || 1;
+		if (currentPage > maxPage) currentPage = maxPage;
+		
+		const start = (currentPage - 1) * pageSize;
+		const pagedData = filteredPosts.slice(start, start + pageSize);
+
+		// 分頁資訊換行顯示
+		document.getElementById('pageNum').innerText = `${currentPage} / ${maxPage}\n共 ${filteredPosts.length} 筆`;
+		
+		// 預設不可按控制
+		document.getElementById('prevBtn').disabled = (currentPage === 1);
+		document.getElementById('nextBtn').disabled = (currentPage === maxPage);
+
+		renderList(pagedData);
+	}
+
+	function renderList(posts) {
+		const list = document.getElementById('post-list');
+		list.innerHTML = '';
+		posts.forEach(post => {
+			const card = document.createElement('div');
+			card.className = 'post-card';
+			const date = formatDate(post["發佈日期"]);
+			const imgData = post["圖片網址"] || post["圖片"] || "";
+			let imgHtml = "";
+			if (imgData) {
+				imgData.split('|').slice(0,3).forEach(src => {
+					if(src.trim()) imgHtml += `<img src="${src.trim()}" class="thumb-img" onerror="this.style.display='none'">`;
+				});
+			}
+			card.innerHTML = `
+				<div class="post-date">${date}</div>
+				<div class="post-title">${post["標題"] || "無標題"}</div>
+				<div class="post-content">${(post["貼文內容"] || "")}</div>
+				${imgHtml}
+			`;
+			card.onclick = () => openModal(date, post["標題"], post["貼文內容"], imgData);
+			list.appendChild(card);
+		});
+	}
+
+	function changePage(step) {
+		currentPage += step;
+		updateDisplay();
+		window.scrollTo(0, 0);
+	}
+
+	function formatDate(raw) {
+		if (!raw) return "";
+		let d = (typeof raw === 'number') ? new Date((raw - 25569) * 86400 * 1000) : new Date(raw);
+		if (isNaN(d.getTime())) return raw;
+		return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+	}
+
+	function openModal(date, title, body, imgData) {
+		document.getElementById('modal-header-title').innerText = title || "無標題";
+		document.getElementById('modal-date').innerText = date;
+		document.getElementById('modal-body').innerText = body;
+		
+		const imgContainer = document.getElementById('modal-images');
+		imgContainer.innerHTML = "";
+		if (imgData) {
+			imgData.split('|').forEach(src => {
+				if(src.trim()) imgContainer.innerHTML += `<img src="${src.trim()}" class="modal-img">`;
+			});
+		}
+		
+		document.getElementById('postModal').style.display = 'block';
+		document.body.style.overflow = 'hidden';
+		document.querySelector('.modal-body-scroll').scrollTop = 0; // 開啟時回到最上方
+	}
+
+	function closeModal() {
+		document.getElementById('postModal').style.display = 'none';
+		document.body.style.overflow = 'auto';
+	}
+
+	window.onload = loadData;
+</script>
+
+</body>
+</html>
