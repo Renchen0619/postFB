@@ -55,6 +55,9 @@
 <div class="container">
 	<h1>📖 鬼磕頭小說庫</h1>
 	<input type="text" id="search" class="search-bar" placeholder="🔍 搜尋內容..." oninput="currentPage=1; updateDisplay()">
+	<select id="titleFilter" class="search-bar" style="margin-top: -5px; background-color: #fff;" onchange="currentPage=1; updateDisplay()">
+    	<option value="">📌 所有主題標題</option>
+	</select>
 	<div id="post-list"></div>
 </div>
 
@@ -110,20 +113,39 @@
 		try {
 			const res = await fetch(API_URL);
 			allPosts = await res.json();
+			updateTitleDropdown();
 			updateDisplay();
 		} catch (e) {
 			list.innerHTML = '<div style="color:red; text-align:center;">連線失敗。</div>';
 		}
 	}
 
+	function updateTitleDropdown() {
+    	const titleFilter = document.getElementById('titleFilter');
+    	// 取得所有標題，過濾掉空的，並移除重複
+    	const titles = [...new Set(allPosts.map(p => p["標題"]).filter(t => t))];
+    
+    	// 排序標題（可選）
+    	titles.sort();
+		titles.forEach(title => {
+			const opt = document.createElement('option');
+			opt.value = title;
+			opt.innerText = title;
+			titleFilter.appendChild(opt);
+		});
+	}
+	
 	function updateDisplay() {
 		const term = document.getElementById('search').value.toLowerCase();
+		const selectedTitle = document.getElementById('titleFilter').value
 		const order = document.getElementById('sortOrder').value;
 		const sizeValue = document.getElementById('pageSize').value;
 
 		filteredPosts = allPosts.filter(p => 
 			(p["貼文內容"] || "").toLowerCase().includes(term) || 
-			(p["標題"] || "").toLowerCase().includes(term)
+			(p["標題"] || "").toLowerCase().includes(term);
+			// 如果沒選標題，就只看關鍵字；如果有選標題，標題必須完全符合
+			const titleMatch = selectedTitle === "" || p["標題"] === selectedTitle;
 		);
 
 		filteredPosts.sort((a, b) => {
