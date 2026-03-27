@@ -121,13 +121,13 @@
 	}
 
 	function updateTitleDropdown() {
-    	const titleFilter = document.getElementById('titleFilter');
-    	// 取得所有標題，過濾掉空的，並移除重複
-    	const titles = [...new Set(allPosts.map(p => p["標題"]).filter(t => t))];
-    
-    	// 排序標題（可選）
-    	titles.sort();
-		titles.forEach(title => {
+			const titleFilter = document.getElementById('titleFilter');
+			// 取得所有標題，過濾掉空的，並移除重複
+			const titles = [...new Set(allPosts.map(p => p["標題"]).filter(t => t))];
+		
+			// 排序標題（可選）
+			titles.sort();
+			titles.forEach(title => {
 			const opt = document.createElement('option');
 			opt.value = title;
 			opt.innerText = title;
@@ -141,12 +141,13 @@
 		const order = document.getElementById('sortOrder').value;
 		const sizeValue = document.getElementById('pageSize').value;
 
-		filteredPosts = allPosts.filter(p => 
-			(p["貼文內容"] || "").toLowerCase().includes(term) || 
-			(p["標題"] || "").toLowerCase().includes(term);
+		filteredPosts = allPosts.filter(p => {
+			const contentMatch = 	(p["貼文內容"] || "").toLowerCase().includes(term) || 
+									(p["標題"] || "").toLowerCase().includes(term);
 			// 如果沒選標題，就只看關鍵字；如果有選標題，標題必須完全符合
 			const titleMatch = selectedTitle === "" || p["標題"] === selectedTitle;
-		);
+			return contentMatch && titleMatch;
+		});
 
 		filteredPosts.sort((a, b) => {
 			const dA = new Date(a["發佈日期"] || 0);
