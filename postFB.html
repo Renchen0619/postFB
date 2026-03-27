@@ -47,7 +47,7 @@
 		
 		/* 彈窗內容區可捲動 */
 		.modal-body-scroll { flex: 1; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-		.modal-img { width: 100%; border-radius: 10px; margin-top: 15px; }
+		.modal-img { width: 100%; border-radius: 10px; margin-top: 15px; margin-bottom: 10px; display: block;}
 	</style>
 </head>
 <body>
@@ -93,8 +93,8 @@
 		</div>
 		<div class="modal-body-scroll">
 			<div id="modal-date" class="post-date"></div>
-			<div id="modal-body" class="post-content" style="display:block; padding-top: 10px; font-size:1.15em; -webkit-line-clamp: unset;"></div>
 			<div id="modal-images"></div>
+			<div id="modal-body" class="post-content" style="display:block; padding-top: 10px; font-size:1.15em; -webkit-line-clamp: unset;"></div>
 		</div>
 	</div>
 </div>
@@ -213,7 +213,6 @@
 	function openModal(date, title, body, imgData) {
 		document.getElementById('modal-header-title').innerText = title || "無標題";
 		document.getElementById('modal-date').innerText = date;
-		document.getElementById('modal-body').innerText = body;
 		
 		const imgContainer = document.getElementById('modal-images');
 		imgContainer.innerHTML = "";
@@ -222,6 +221,8 @@
 				if(src.trim()) imgContainer.innerHTML += `<img src="${src.trim()}" class="modal-img">`;
 			});
 		}
+		
+		document.getElementById('modal-body').innerText = body;
 		
 		document.getElementById('postModal').style.display = 'block';
 		document.body.style.overflow = 'hidden';
