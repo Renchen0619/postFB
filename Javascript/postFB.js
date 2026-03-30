@@ -50,13 +50,12 @@ function updateDisplay() {
 	});
 	
 	filteredPosts = allPosts.filter(p => {
-		// 原本的搜尋條件
-		const contentMatch = (p["貼文內容"] || "").toLowerCase().includes(term) || (p["標題"] || "").toLowerCase().includes(term);
-		const titleMatch = selectedTitle === "" || p["標題"] === selectedTitle;
+		const content = (p["貼文內容"] || "").toLowerCase();
+		const title = (p["標題"] || "").toLowerCase();
 		
-		// 新增：收藏過濾條件
-		const favMatch = !showOnlyFavs || favorites.includes(p["ID"] || p["發佈日期"]); 
-		// 註：建議資料要有唯一 ID，若無則暫用發佈日期代替
+		const contentMatch = content.includes(term) || title.includes(term);
+		const titleMatch = selectedTitle === "" || p["標題"] === selectedTitle;
+		const favMatch = !showOnlyFavs || favorites.includes(p["ID"] || p["發佈日期"]);
 		
 		return contentMatch && titleMatch && favMatch;
 	});
@@ -87,9 +86,15 @@ function updateDisplay() {
 function renderList(posts) {
 	const list = document.getElementById('post-list');
 	list.innerHTML = '';
+	// 使用 DocumentFragment 減少重繪次數
+	const fragment = document.createDocumentFragment();
 	posts.forEach(post => {
 		const card = document.createElement('div');
 		card.className = 'post-card';
+		
+		// 擷取前 60 個字，減少首頁 DOM 節點大小
+		const summary = (post["貼文內容"] || "").substring(0, 60) + "...";
+		
 		const date = formatDate(post["發佈日期"]);
 		const imgData = post["圖片網址"] || post["圖片"] || "";
 		const isFav = favorites.includes(post["ID"] || post["發佈日期"]);
@@ -109,12 +114,13 @@ function renderList(posts) {
 			${favStar}
 			<div class="post-date">${date}</div>
 			<div class="post-title">${post["標題"] || "無標題"}</div>
-			<div class="post-content">${(post["貼文內容"] || "")}</div>
+			<div class="post-content">${summary}</div>
 			${imgHtml}
 		`;
 		card.onclick = () => openModal(date, post["標題"], post["貼文內容"], imgData);
-		list.appendChild(card);
+		fragment.appendChild(card);
 	});
+	list.appendChild(fragment);
 }
 
 function changePage(step) {
