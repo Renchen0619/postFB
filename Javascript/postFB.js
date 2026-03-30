@@ -4,7 +4,7 @@ let currentPage = 1;
 let favorites = JSON.parse(localStorage.getItem('novel_favs')) || [];
 let showOnlyFavs = false; // 是否只顯示收藏
 
-const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3ajJxYzBMaGpjUU91UWIxdWxQRjhabjFEVkRWYVp6U2ZSeDQ2V28yNHpFVXJVaVpuU1dxV25YZVpGMTRpWFRRcFgvZXhlYw==";
+const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5VjV1NkNfNU1weEJEV2k1eHptUjNFXzhOZWpOeFZqcUtQYUloYkx2RE0wM1d5Y19QWUx3bXltNVFmWWhrclYwUzNUQS9leGVj";
 const API_URL = atob(secret);
 
 async function loadData() {
