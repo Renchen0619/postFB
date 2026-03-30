@@ -9,14 +9,30 @@ const API_URL = atob(secret);
 
 async function loadData() {
 	const list = document.getElementById('post-list');
-	list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">正在載入小說資料...</div>';
+	
+	// 1. 先看瀏覽器有沒有上次存過的資料
+	const localData = localStorage.getItem('cached_novel_data');
+	if (localData) {
+		allPosts = JSON.parse(localData);
+		updateDisplay(); // 瞬間顯示舊資料，使用者不用等！
+	} else {
+		list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">正在載入小說資料...</div>';
+	}
+
 	try {
+		// 2. 背景去抓最新的資料
 		const res = await fetch(API_URL);
-		allPosts = await res.json();
-		updateTitleDropdown();
-		updateDisplay();
+		const newData = await res.json();
+		
+		// 3. 如果新資料跟舊的不一樣，才更新畫面
+		if (JSON.stringify(newData) !== localData) {
+			allPosts = newData;
+			localStorage.setItem('cached_novel_data', JSON.stringify(newData));
+			updateTitleDropdown();
+			updateDisplay();
+		}
 	} catch (e) {
-		list.innerHTML = '<div style="color:red; text-align:center;">連線失敗。</div>';
+		console.error("更新失敗", e);
 	}
 }
 
