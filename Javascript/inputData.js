@@ -142,8 +142,7 @@ window.uploadToGithub = async function() {
 		}
 	}
 
-	// --- 修改為換行符號 \n ---
-	picInput.value = uploadedPaths.join('\n');
+	picInput.value = uploadedPaths.join('|');
 	status.innerText = `✅ 成功上傳 ${uploadedPaths.length} 個檔案！`;
 	status.style.color = "green";
 }
