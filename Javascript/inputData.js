@@ -154,6 +154,7 @@ window.sendData = async function() {
 	}
 
 	const dbUrl = atob(updateData_URL);
+	const userName = document.getElementById('token').value.trim();
 	const status = document.getElementById('status');
 	status.innerText = "🚀 正在傳送資料至資料庫...";
 
