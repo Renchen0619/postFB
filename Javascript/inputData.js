@@ -10,15 +10,18 @@ let updateGithub_URL = "";
 let updateData_URL = "";
 let finalToken = ""; 
 
+/**
+ * 初始化：讀取設定檔並綁定時間
+ */
 async function initApp() {
 	try {
 		const config = await utils.getIni(iniPath);
 		updateGithub_URL = config.updateGithub_URL; 
 		updateData_URL = config.updateData_URL;
 		updateTime();
-		console.log("系統設定載入成功");
+		console.log("✅ 系統設定載入成功");
 	} catch (e) {
-		console.error("初始化失敗:", e);
+		console.error("❌ 初始化失敗:", e);
 	}
 }
 
@@ -36,6 +39,8 @@ async function checkUser() {
 	if (!userName) { alert("請輸入使用者名稱！"); return false; }
 	const status = document.getElementById('status');
 	status.innerText = "⏳ 正在驗證身分...";
+	status.style.color = "orange";
+	
 	const authUrl = atob(updateGithub_URL);
 	try {
 		const response = await fetch(authUrl, {
@@ -59,7 +64,7 @@ async function checkUser() {
 	}
 }
 
-// --- 修正：支援多檔案上傳且使用時間格式命名 ---
+// --- 核心功能：多檔案上傳並使用換行符號隔開路徑 ---
 window.uploadToGithub = async function() {
 	if (!finalToken) {
 		const ok = await checkUser();
@@ -77,27 +82,28 @@ window.uploadToGithub = async function() {
 
 	let uploadedPaths = [];
 
-	// 使用 for...of 確保按順序一個一個上傳
+	// 取得當前時間基礎，用於命名
+	const now = new Date();
+	const pad = (n) => n.toString().padStart(2, '0');
+	const dateBase = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + 
+					 pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+
 	for (let i = 0; i < fileInput.files.length; i++) {
 		const file = fileInput.files[i];
 		
-		// 產生 YYYYMMDDHHmmss 格式
-		const now = new Date();
-		const pad = (n) => n.toString().padStart(2, '0');
-		const dateStr = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + 
-						pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + i; // 加 i 避免同秒衝突
-		
-		const fileExt = file.name.split('.').pop();
-		const fileName = `${dateStr}.${fileExt}`;
+		// 生成唯一檔名：YYYYMMDDHHmmss + 序號
+		const fileExt = file.name.split('.').pop().toLowerCase();
+		const fileName = `${dateBase}${i}.${fileExt}`;
 		const filePath = `${GITHUB_PATH}/${fileName}`;
 
 		status.innerText = `⏳ 正在上傳 (${i + 1}/${fileInput.files.length}): ${fileName}`;
 
 		try {
-			const base64 = await new Promise((resolve) => {
+			const base64 = await new Promise((resolve, reject) => {
 				const reader = new FileReader();
 				reader.readAsDataURL(file);
 				reader.onload = () => resolve(reader.result.split(',')[1]);
+				reader.onerror = (e) => reject(e);
 			});
 
 			const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filePath}`;
@@ -116,17 +122,18 @@ window.uploadToGithub = async function() {
 			if (res.ok) {
 				uploadedPaths.push(filePath);
 			} else {
-				throw new Error(`檔案 ${file.name} 上傳失敗`);
+				const errJson = await res.json();
+				throw new Error(errJson.message || "上傳失敗");
 			}
 		} catch (e) {
 			console.error(e);
 			status.innerText = `❌ 部分失敗: ${e.message}`;
 			status.style.color = "red";
-			return; // 遇到錯誤就停止，避免亂掉
+			return;
 		}
 	}
 
-	// 將所有路徑填入，用換行隔開 (方便你自己看或處理)
+	// --- 重點修改：使用換行符號 (\n) 隔開路徑 ---
 	picInput.value = uploadedPaths.join('\n');
 	status.innerText = `✅ 成功上傳 ${uploadedPaths.length} 個檔案！`;
 	status.style.color = "green";
@@ -145,27 +152,29 @@ window.sendData = async function() {
 	try {
 		await fetch(dbUrl, {
 			method: "POST",
-			mode: "no-cors",
+			mode: "no-cors", 
 			headers: { "Content-Type": "text/plain" },
 			body: JSON.stringify({
 				token: finalToken,
 				date: document.getElementById('date').value,
 				title: document.getElementById('title').value,
 				content: document.getElementById('content').value,
-				pic: document.getElementById('pic').value // 這裡會包含多行路徑
+				pic: document.getElementById('pic').value // 這裡會包含換行的多條路徑
 			})
 		});
 
-		status.innerText = "✅ 資料匯入成功！";
+		status.innerText = "✅ 全數完成！資料已匯入資料庫。";
 		status.style.color = "green";
 		
+		// 清空輸入
 		document.getElementById('title').value = "";
 		document.getElementById('content').value = "";
 		document.getElementById('pic').value = "";
 		document.getElementById('fileInput').value = "";
 		updateTime();
+
 	} catch (e) {
-		status.innerText = "❌ 匯入失敗。";
+		status.innerText = "❌ 資料庫匯入失敗。";
 		console.error(e);
 	}
 }
