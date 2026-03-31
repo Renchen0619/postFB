@@ -163,7 +163,7 @@ window.sendData = async function() {
 			mode: "no-cors", 
 			headers: { "Content-Type": "text/plain" },
 			body: JSON.stringify({
-				token: finalToken,
+				token: userName,
 				date: document.getElementById('date').value,
 				title: document.getElementById('title').value,
 				content: document.getElementById('content').value,
