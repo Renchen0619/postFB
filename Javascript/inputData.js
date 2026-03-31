@@ -154,7 +154,6 @@ window.sendData = async function() {
 	}
 
 	const dbUrl = atob(updateData_URL);
-	const userName = document.getElementById('token').value.trim();
 	const status = document.getElementById('status');
 	status.innerText = "🚀 正在傳送資料至資料庫...";
 
@@ -164,7 +163,7 @@ window.sendData = async function() {
 			mode: "no-cors", 
 			headers: { "Content-Type": "text/plain" },
 			body: JSON.stringify({
-				token: userName,
+				token: document.getElementById('token').value.trim(),
 				date: document.getElementById('date').value,
 				title: document.getElementById('title').value,
 				content: document.getElementById('content').value,
