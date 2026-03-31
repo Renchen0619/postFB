@@ -2,18 +2,22 @@
 <html lang="zh-TW">
 <head>
 	<meta charset="UTF-8">
-	<title>小說庫後台 - 權限驗證</title>
+	<title>小說庫後台 - 內容匯入與圖片上傳</title>
 	<style>
 		body { font-family: sans-serif; background: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
 		.admin-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
 		.field { margin-bottom: 15px; }
 		label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
 		input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-		/* 強調 Token 輸入框 */
 		#token { border: 2px solid #1877f2; background: #e7f3ff; }
-		button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+		/* 檔案上傳樣式 */
+		.file-area { background: #f9f9f9; padding: 10px; border: 1px dashed #bbb; border-radius: 5px; margin-bottom: 15px; }
+		button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 5px; }
 		button:hover { background: #145dbf; }
-		#status { margin-top: 15px; text-align: center; font-weight: bold; }
+		.btn-upload { background: #28a745; margin-bottom: 10px; }
+		.btn-upload:hover { background: #218838; }
+		#status { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; white-space: pre-line; }
+		hr { margin: 20px 0; border: 0; border-top: 1px solid #eee; }
 	</style>
 </head>
 <body>
@@ -22,8 +26,14 @@
 	<h2>🔑 內容匯入管理</h2>
 	
 	<div class="field">
-		<label>請輸入存取 Token (密鑰)</label>
+		<label>Admin 上傳密碼</label>
 		<input type="password" id="token" placeholder="請輸入密碼">
+	</div>
+
+	<div class="file-area">
+		<label>📁 上傳圖片至 GitHub</label>
+		<input type="file" id="fileInput" accept="image/*" multiple>
+		<button class="btn-upload" onclick="uploadToGithub()">1. 上傳圖片</button>
 	</div>
 
 	<hr>
@@ -44,63 +54,15 @@
 	</div>
 
 	<div class="field">
-		<label>圖片路徑</label>
+		<label>圖片路徑 (自動填入)</label>
 		<input type="text" id="pic" placeholder="pic/example.jpg">
 	</div>
 
-	<button onclick="sendData()">確認匯入資料庫</button>
+	<button onclick="sendData()">2. 確認匯入資料庫</button>
 	<div id="status"></div>
 </div>
 
-<script>
-	// 自動生成時間
-	function updateTime() {
-		const now = new Date();
-		const fmt = (n) => n.toString().padStart(2, '0');
-		document.getElementById('date').value = `${now.getFullYear()}/${fmt(now.getMonth()+1)}/${fmt(now.getDate())} ${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
-	}
-	updateTime();
-	
-	async function sendData() {
-		const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6ZmNWRFRKeDFRdFZOWkFWZHpyVEVRczc2ZzRteWlqMWJ2bGJCalFyRXdrZHc0X19TWWptR2FIb282U3BTNnRlajgvZXhlYw==";
-		const scriptUrl = atob(secret);
-		const status = document.getElementById('status');
-		const token = document.getElementById('token').value;
-
-		if (!token) { alert("請輸入 Token！"); return; }
-
-		status.innerText = "🚀 正在傳送資料...";
-		status.style.color = "blue";
-
-		try {
-			// 直接 POST，不進行前置 GET 驗證以避開 CORS
-			await fetch(scriptUrl, {
-				method: "POST",
-				mode: "no-cors", // 這會解決所有的 CORS 報錯
-				cache: "no-cache",
-				headers: { "Content-Type": "text/plain" },
-				body: JSON.stringify({
-					token: token,
-					date: document.getElementById('date').value,
-					title: document.getElementById('title').value,
-					content: document.getElementById('content').value,
-					pic: document.getElementById('pic').value
-				})
-			});
-
-			// 由於 no-cors 無法讀取回傳值，我們假設沒噴 Error 就是發送成功
-			status.innerText = "✅ 指令已發出，請至試算表確認。";
-			status.style.color = "green";
-			document.getElementById('title').value = "";
-			document.getElementById('content').value = "";
-			updateTime();
-
-		} catch (e) {
-			status.innerText = "❌ 發送失敗，請檢查網路。";
-			console.error(e);
-		}
-	}
-</script>
+<script type="module" src="js/inputData.js"></script>
 
 </body>
 </html>
