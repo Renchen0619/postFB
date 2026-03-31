@@ -10,9 +10,6 @@ let updateGithub_URL = "";
 let updateData_URL = "";
 let finalToken = ""; 
 
-/**
- * 初始化：讀取設定檔並綁定時間
- */
 async function initApp() {
 	try {
 		const config = await utils.getIni(iniPath);
@@ -64,7 +61,7 @@ async function checkUser() {
 	}
 }
 
-// --- 核心功能：多檔案上傳並使用換行符號隔開路徑 ---
+// --- 核心功能：多檔案上傳 ---
 window.uploadToGithub = async function() {
 	if (!finalToken) {
 		const ok = await checkUser();
@@ -81,8 +78,6 @@ window.uploadToGithub = async function() {
 	status.style.color = "blue";
 
 	let uploadedPaths = [];
-
-	// 取得當前時間基礎，用於命名
 	const now = new Date();
 	const pad = (n) => n.toString().padStart(2, '0');
 	const dateBase = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + 
@@ -90,8 +85,6 @@ window.uploadToGithub = async function() {
 
 	for (let i = 0; i < fileInput.files.length; i++) {
 		const file = fileInput.files[i];
-		
-		// 生成唯一檔名：YYYYMMDDHHmmss + 序號
 		const fileExt = file.name.split('.').pop().toLowerCase();
 		const fileName = `${dateBase}${i}.${fileExt}`;
 		const filePath = `${GITHUB_PATH}/${fileName}`;
@@ -99,10 +92,15 @@ window.uploadToGithub = async function() {
 		status.innerText = `⏳ 正在上傳 (${i + 1}/${fileInput.files.length}): ${fileName}`;
 
 		try {
+			// 1. 取得 Base64 並進行「深度清洗」
 			const base64 = await new Promise((resolve, reject) => {
 				const reader = new FileReader();
 				reader.readAsDataURL(file);
-				reader.onload = () => resolve(reader.result.split(',')[1]);
+				reader.onload = () => {
+					const raw = reader.result.split(',')[1];
+					// 移除任何可能的換行符號或空白，這是引發 500 錯誤的主因
+					resolve(raw.replace(/\s/g, '')); 
+				};
 				reader.onerror = (e) => reject(e);
 			});
 
@@ -119,22 +117,33 @@ window.uploadToGithub = async function() {
 				})
 			});
 
+			// 2. 安全檢查 Response
 			if (res.ok) {
 				uploadedPaths.push(filePath);
 			} else {
-				const errJson = await res.json();
-				throw new Error(errJson.message || "上傳失敗");
+				// 如果失敗，先檢查 Response 是否為 JSON
+				const contentType = res.headers.get("content-type");
+				let errorDetails = `HTTP ${res.status}`;
+				
+				if (contentType && contentType.includes("application/json")) {
+					const errJson = await res.json();
+					errorDetails = errJson.message || errorDetails;
+				} else {
+					const errText = await res.text();
+					console.error("GitHub 非 JSON 報錯:", errText);
+				}
+				throw new Error(errorDetails);
 			}
 		} catch (e) {
-			console.error(e);
+			console.error("詳細上傳失敗資訊:", e);
 			status.innerText = `❌ 部分失敗: ${e.message}`;
 			status.style.color = "red";
-			return;
+			return; 
 		}
 	}
 
-	// --- 重點修改：使用換行符號 (\n) 隔開路徑 ---
-	picInput.value = uploadedPaths.join('|');
+	// --- 修改為換行符號 \n ---
+	picInput.value = uploadedPaths.join('\n');
 	status.innerText = `✅ 成功上傳 ${uploadedPaths.length} 個檔案！`;
 	status.style.color = "green";
 }
@@ -159,14 +168,13 @@ window.sendData = async function() {
 				date: document.getElementById('date').value,
 				title: document.getElementById('title').value,
 				content: document.getElementById('content').value,
-				pic: document.getElementById('pic').value // 這裡會包含換行的多條路徑
+				pic: document.getElementById('pic').value 
 			})
 		});
 
 		status.innerText = "✅ 全數完成！資料已匯入資料庫。";
 		status.style.color = "green";
 		
-		// 清空輸入
 		document.getElementById('title').value = "";
 		document.getElementById('content').value = "";
 		document.getElementById('pic').value = "";
