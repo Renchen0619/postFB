@@ -4,8 +4,57 @@ let currentPage = 1;
 let favorites = JSON.parse(localStorage.getItem('novel_favs')) || [];
 let showOnlyFavs = false; // 是否只顯示收藏
 
-const secret = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5VjV1NkNfNU1weEJEV2k1eHptUjNFXzhOZWpOeFZqcUtQYUloYkx2RE0wM1d5Y19QWUx3bXltNVFmWWhrclYwUzNUQS9leGVj";
-const API_URL = atob(secret);
+// 1. 將 API_URL 改為 let，因為後面要重新賦值
+let API_URL = "";
+
+// 全域變數儲存設定
+let appConfig = {};
+
+/**
+ * 讀取並解析 INI 檔案
+ * @param {string} filePath - INI 檔案的路徑
+ * @returns {Promise<Object>} - 回傳解析後的物件
+ */
+async function getIni(filePath) {
+	try {
+		// 加入時間戳避免瀏覽器快取舊的設定
+		const response = await fetch(filePath + '?t=' + Date.now());
+		if (!response.ok) throw new Error(`找不到檔案: ${filePath}`);
+		
+		const text = await response.text();
+		const config = {};
+		const lines = text.split(/\r?\n/);
+
+		lines.forEach(line => {
+			line = line.trim();
+			if (!line || line.startsWith(';') || line.startsWith('#')) return;
+			const index = line.indexOf('=');
+			if (index !== -1) {
+				const key = line.substring(0, index).trim();
+				const value = line.substring(index + 1).trim();
+				config[key] = value;
+			}
+		});
+		return config;
+	} catch (e) {
+		console.error("INI Error:", e);
+		return null;
+	}
+}
+
+// 啟動流程
+async function initApp() {
+	const iniPath = 'settings/postFB.ini'; 
+	const config = await getIni(iniPath);
+	
+	if (config && config.API_URL) {
+		API_URL = atob(config.API_URL);
+		// 確保網址拿到了，才開始抓資料
+		await loadData();
+	} else {
+		console.error("無法從 INI 取得 API_URL");
+	}
+}
 
 async function loadData() {
 	const list = document.getElementById('post-list');
@@ -14,6 +63,7 @@ async function loadData() {
 	const localData = localStorage.getItem('cached_novel_data');
 	if (localData) {
 		allPosts = JSON.parse(localData);
+		updateTitleDropdown(); // 先用舊資料填充選單
 		updateDisplay(); // 瞬間顯示舊資料，使用者不用等！
 	} else {
 		list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">正在載入小說資料...</div>';
@@ -56,14 +106,6 @@ function updateDisplay() {
 	const selectedTitle = document.getElementById('titleFilter').value
 	const order = document.getElementById('sortOrder').value;
 	const sizeValue = document.getElementById('pageSize').value;
-
-	filteredPosts = allPosts.filter(p => {
-		const contentMatch = 	(p["貼文內容"] || "").toLowerCase().includes(term) || 
-								(p["標題"] || "").toLowerCase().includes(term);
-		// 如果沒選標題，就只看關鍵字；如果有選標題，標題必須完全符合
-		const titleMatch = selectedTitle === "" || p["標題"] === selectedTitle;
-		return contentMatch && titleMatch;
-	});
 	
 	filteredPosts = allPosts.filter(p => {
 		const content = (p["貼文內容"] || "").toLowerCase();
@@ -197,4 +239,5 @@ function toggleFavFilter() {
 	currentPage = 1;
 	updateDisplay();
 }
-window.onload = loadData;
+
+window.onload = initApp;
