@@ -4,7 +4,7 @@
  * @param {string} filePath - INI 檔案的路徑
  * @returns {Promise<Object>} - 回傳解析後的物件
  */
-async function getIni(filePath) {
+export async function getIni(filePath) {
 	try {
 		// 加入時間戳避免瀏覽器快取舊的設定
 		const response = await fetch(filePath + '?t=' + Date.now());
