@@ -49,8 +49,12 @@ async function loadData() {
 
 function updateTitleDropdown() {
 	const titleFilter = document.getElementById('titleFilter');
-	const titles = [...new Set(allPosts.map(p => p["標題"]).filter(t => t))];
-	titles.sort();
+	if (!titleFilter) return;
+	titleFilter.innerHTML = '<option value="">📌 所有主題標題</option>';
+
+	const titles = [...new Set(allPosts.map(p => p["標題"]).filter(t => t && String(t).trim() !== ""))];
+	titles.sort(); // 標題排序 A-Z
+	
 	titles.forEach(title => {
 		const opt = document.createElement('option');
 		opt.value = title;
@@ -61,7 +65,8 @@ function updateTitleDropdown() {
 
 function updateDisplay() {
 	const term = document.getElementById('search').value.toLowerCase();
-	const selectedTitle = document.getElementById('titleFilter').value
+	const titleSelect = document.getElementById('titleFilter');
+	const selectedTitle = titleSelect ? titleSelect.value : ""; // 取得選單的值
 	const order = document.getElementById('sortOrder').value;
 	const sizeValue = document.getElementById('pageSize').value;
 	
@@ -196,6 +201,7 @@ window.changePage = changePage;
 window.toggleFavorite = toggleFavorite;
 window.toggleFavFilter = toggleFavFilter;
 window.closeModal = closeModal;
+window.updateDisplay = updateDisplay;
 
 // 啟動
 initApp();
