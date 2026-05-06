@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>鬼磕頭 | 靈異創作．專業靈學服務</title>
+	<style>
+		:root {
+			--primary-color: #2c3e50; /* 專業深灰藍 */
+			--accent-color: #c0392b;  /* 神祕暗紅 */
+			--bg-color: #ffffff;
+			--text-color: #333;
+		}
+		body { 
+			font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
+			line-height: 1.6; 
+			color: var(--text-color); 
+			background: var(--bg-color); 
+			margin: 0; 
+			padding: 0; 
+		}
+		header { 
+			background: #fff; 
+			border-bottom: 1px solid #eee; 
+			padding: 1rem 5%; 
+			display: flex; 
+			justify-content: space-between; 
+			align-items: center; 
+			position: sticky; 
+			top: 0; 
+			z-index: 100; 
+		}
+		.logo { font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; color: var(--primary-color); }
+		nav a { margin-left: 20px; text-decoration: none; color: var(--text-color); font-size: 0.9rem; }
+		
+		.container { max-width: 900px; margin: auto; padding: 40px 20px; }
+		
+		/* --- 公告區樣式優化 --- */
+		.notice-board { background: #f9f9f9; border-left: 4px solid var(--accent-color); padding: 20px; margin-bottom: 40px; }
+		.notice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+		.notice-header h2 { margin: 0; font-size: 1.2rem; }
+		
+		/* 縮減公告間距：移除原本底部的 margin，改用微小的 padding */
+		.notice-item { 
+			margin-bottom: 8px; 
+			border-bottom: 1px solid #eef2f3; 
+			padding-bottom: 6px; 
+			white-space: pre-line; 
+			font-size: 0.95rem;
+		}
+		.notice-item:last-child { border-bottom: none; margin-bottom: 0; }
+		.notice-date { font-size: 0.8rem; color: #888; margin-right: 5px; font-weight: bold; }
+		
+		/* 顯示全部按鈕 */
+		.more-link { font-size: 0.85rem; color: var(--accent-color); text-decoration: none; font-weight: bold; }
+		.more-link:hover { text-decoration: underline; }
+
+		/* 個人簡介區 */
+		.intro-section { text-align: center; margin: 10px 0 40px 0; padding: 30px 20px; background: #fcfcfc; border-radius: 15px; border: 1px solid #f0f0f0;}
+		.intro-text { font-size: 1.1rem; color: #555; font-style: italic; white-space: pre-line; margin: 0;}
+
+		/* 服務項目卡片 */
+		.services { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 40px; }
+		.card { border: 1px solid #eee; padding: 25px; border-radius: 12px; transition: 0.3s; background: #fff; }
+		.card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.08); transform: translateY(-5px); }
+		.card h3 { color: var(--primary-color); border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; }
+		.card p { margin: 0; color: #666; font-size: 0.95rem; text-align: justify; }
+
+		/* 入口按鈕 */
+		.btn { display: inline-block; background: var(--primary-color); color: #fff; padding: 12px 35px; text-decoration: none; border-radius: 30px; margin-top: 20px; transition: 0.3s; }
+		.btn:hover { background: var(--accent-color); }
+
+		footer { text-align: center; padding: 60px 20px; background: #f4f4f4; font-size: 0.85rem; color: #888; margin-top: 60px; }
+	</style>
+</head>
+<body>
+
+<header>
+	<div class="logo">鬼磕頭</div>
+	<nav>
+		<a href="#services">專業服務</a>
+		<a href="#contact">聯絡方式</a>
+		<a href="https://renchen0619.github.io/postFB/postFB.html">進入小說庫</a>
+	</nav>
+</header>
+
+<div class="container">
+	<!-- 1. 個人簡介 -->
+	<section class="intro-section">
+		<p class="intro-text">
+			我是鬼磕頭。在此，分享我所看到與遇上的靈界故事。
+			同時，也為有心改變的人，竭誠服務。
+		</p>
+	</section>
+	
+	<!-- 2. 公告區 -->
+	<section class="notice-board">
+		<div class="notice-header">
+			<h2>最新公告</h2>
+			<a href="./notices.html" class="more-link">查看全部 ➔</a>
+		</div>
+		<div id="announcement-content">正在獲取最新公告...</div>
+	</section>
+
+	<!-- 3. 專業服務項目 -->
+	<section id="services">
+		<h2 style="text-align: center; margin-bottom: 30px;">專業服務項目</h2>
+		<div class="services" id="services-container">
+			<p style="text-align: center; grid-column: 1/-1;">正在加載服務項目...</p>
+		</div>
+	</section>
+
+	<!-- 4. 小說庫跳轉區 -->
+	<section style="text-align: center; padding: 60px 0;">
+		<h2>原創靈異小說庫</h2>
+		<p>走進鬼磕頭的文字世界，體驗最真實的驚悚感。</p>
+		<a href="https://renchen0619.github.io/postFB/postFB.html" class="btn">點此進入閱讀</a>
+	</section>
+
+	<!-- 5. 聯絡資訊 -->
+	<section id="contact" style="border-top: 1px solid #eee; padding-top: 40px;">
+		<h2>聯絡方式</h2>
+		<p>若有服務需求或商務合作，請洽：</p>
+		<ul>
+			<li>Facebook 專頁：<a href="https://www.facebook.com/p/%E9%AC%BC%E7%A3%95%E9%A0%AD-100063596994961/" target="_blank">鬼磕頭 粉絲專頁</a></li>
+			<li>官方信箱：(填寫你的Email)</li>
+		</ul>
+	</section>
+</div>
+
+<footer>
+	<p>&copy; 2026 鬼磕頭. All Rights Reserved.</p>
+	<p>聲明：本站服務涉及靈學感應，僅供參考，請保持理性思考。</p>
+</footer>
+
+<script>
+	const NOVEL_API_URL = "https://script.google.com/macros/s/AKfycbwpmFBBbEt8y9qQETftQktjuAiI1UQKm6Ro_rtGCHTaWRANiFngtDG7UWXnCvHMQbNgdg/exec";
+	const SERVICE_API_URL = "https://script.google.com/macros/s/AKfycbyI7rtEXHxrq8yUDF4TpziHquRO8Cl_vQNVXIEe_oQdKlAT2W4JMAJLxA4paoy5P-vu/exec"; 
+
+	let allNotices = [];
+
+	async function fetchData() {
+		// 抓取公告
+		try {
+			const response = await fetch(NOVEL_API_URL);
+			if (!response.ok) throw new Error('連線失敗');
+			const data = await response.json();
+			
+			// 修正點：確保欄位名稱 "標題" 完全匹配，並過濾資料
+			allNotices = data.filter(item => item["標題"] === "【公告】" || item["標題"] === "公告");
+			
+			// 排序
+			allNotices.sort((a, b) => new Date(b["發佈日期"]) - new Date(a["發佈日期"]));
+			
+			renderNotices();
+		} catch (e) {
+			console.error("公告讀取出錯:", e);
+			document.getElementById('announcement-content').innerText = "公告加載失敗，請檢查 API 權限。";
+		}
+
+		// 抓取服務項目
+		try {
+			const serviceRes = await fetch(SERVICE_API_URL);
+			const serviceData = await serviceRes.json();
+			
+			const container = document.getElementById('services-container');
+			container.innerHTML = ''; 
+
+			// 過濾掉公告標籤的內容
+			const filteredServices = serviceData.filter(item => item["標題"] !== "【公告】" && item["標題"] !== "公告");
+
+			filteredServices.forEach(item => {
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `
+					<h3>${item["服務名稱"] || item["標題"] || '專業服務'}</h3>
+					<p>${item["服務介紹"] || item["貼文內容"] || '歡迎洽詢。'}</p>
+				`;
+				container.appendChild(card);
+			});
+		} catch (e) {
+			console.error("服務項目讀取出錯:", e);
+			document.getElementById('services-container').innerHTML = "<p style='text-align:center;'>服務項目載入失敗。</p>";
+		}
+	}
+
+	function renderNotices() {
+		const content = document.getElementById('announcement-content');
+		
+		if (allNotices.length === 0) {
+			content.innerText = "目前暫無公告。";
+			return;
+		}
+
+		// 僅在首頁顯示最新 5 筆，且限制字數避免撐開版面
+		const displayList = allNotices.slice(0, 5);
+		
+		content.innerHTML = displayList.map(item => {
+			const rawContent = item["貼文內容"] || "";
+			// 截斷過長的內容（首頁只看摘要）
+			const summary = rawContent.length > 50 ? rawContent.substring(0, 50) + "..." : rawContent;
+			const date = item["發佈日期"] ? new Date(item["發佈日期"]).toLocaleDateString() : "未知日期";
+			
+			return `
+				<div class="notice-item">
+					<span class="notice-date">[${date}]</span>
+					<span>${summary}</span>
+				</div>
+			`;
+		}).join('');
+	}
+
+	fetchData();
+</script>
+
+</body>
+</html>
